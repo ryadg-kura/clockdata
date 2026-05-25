@@ -48,13 +48,13 @@ flowchart TD
   end
 
   subgraph Consumers["Consumers temps réel"]
-    CA[Consumer Alertes]:::alert
+    CA[Consumer Alertes Détection BPM < 40]:::alert
     CDL[Consumer Data Lake]:::process
   end
 
   subgraph Alerting["Service Alerte"]
-    AN[Détection seuil critique\nBPM < 40 → alerte]:::process
-    NOTIF[Notification, email]:::alert
+    SA{{"Stream d'alertes"}}:::stream
+    CN[Consumer Notification email, SMS]:::alert
   end
 
   subgraph DataLake["Data Lake"]
@@ -74,12 +74,12 @@ flowchart TD
   D -->|"données toutes les X secondes"| MQ
   MQ --> CA
   MQ --> CDL
-  CA --> AN
-  AN -->|"alerte détectée"| NOTIF
+  CA --> |"alerte détectée"| SA
   CDL -->|"JSON brut"| BRONZE
   BRONZE --> P1
   P1 -->|"AVRO nettoyé"| SILVER
   SILVER --> P2
+  SA --> CN
   P2 -->|"PARQUET agrégé"| GOLD
   GOLD --> VIZ
   
