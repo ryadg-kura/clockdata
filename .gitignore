@@ -1,0 +1,17 @@
+target/
+project/target/
+project/project/
+.bsp/
+.metals/
+.idea/
+data/bronze/*
+data/silver/*
+data/gold/*
+!data/bronze/.gitkeep
+!data/silver/.gitkeep
+!data/gold/.gitkeep
+derby.log
+metastore_db/
+**/checkpoint/
+.DS_Store
+Thumbs.db
