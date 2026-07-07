@@ -121,10 +121,18 @@ tar -xzf /tmp/kafka.tgz -C ~/kafka --strip-components=1
 rm /tmp/kafka.tgz
 
 # Formater le stockage KRaft avec un UUID de cluster
+# (rm -rf par sécurité : évite "Invalid cluster.id" si le dossier existe déjà
+# d'un essai précédent)
 cd ~/kafka
+rm -rf /tmp/kraft-combined-logs
 KAFKA_CLUSTER_ID=$(bin/kafka-storage.sh random-uuid)
 bin/kafka-storage.sh format -t "$KAFKA_CLUSTER_ID" -c config/kraft/server.properties
 ```
+
+> Si tu relances cette étape de formatage une deuxième fois (par exemple après une première
+> tentative), et que tu obtiens `Invalid cluster.id in: /tmp/kraft-combined-logs/meta.properties`,
+> c'est parce que ce dossier contient déjà les métadonnées d'un ancien formatage. Le
+> `rm -rf /tmp/kraft-combined-logs` ci-dessus règle le problème (déjà inclus dans la commande).
 
 **Démarrer Kafka** (à chaque session de démo, dans un terminal dédié) :
 
