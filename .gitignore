@@ -20,3 +20,4 @@ __pycache__/
 dashboard/venv/
 data/gold/
 data/silver/
+docs/

@@ -10,7 +10,7 @@ def load_gold(gold_path: str) -> pd.DataFrame | None:
     parquet_files = list(path.glob("*.parquet"))
     if not parquet_files:
         return None
-    df = pd.read_parquet(gold_path)
+    df = pd.read_parquet(parquet_files)
     df["day"] = df["hour"].str[:10]
     df["datetime"] = pd.to_datetime(df["hour"], format="%Y-%m-%d %H")
     return df
@@ -52,3 +52,17 @@ def get_steps_per_day(df: pd.DataFrame) -> pd.DataFrame:
         .sort_values("day")
         .reset_index(drop=True)
     )
+
+
+def load_analysis(analysis_path: str) -> pd.DataFrame | None:
+    path = Path(analysis_path)
+    if not path.exists():
+        return None
+    json_files = list(path.glob("*.json"))
+    if not json_files:
+        return None
+    chunks = [pd.read_json(f, lines=True) for f in sorted(json_files)]
+    df = pd.concat(chunks, ignore_index=True)
+    if df.empty or not {"question", "answer"}.issubset(df.columns):
+        return None
+    return df[["question", "answer"]]

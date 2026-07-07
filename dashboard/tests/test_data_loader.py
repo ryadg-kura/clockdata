@@ -15,6 +15,7 @@ from data_loader import (
     get_bpm_history,
     get_devices,
     get_steps_per_day,
+    load_analysis,
     load_gold,
 )
 
@@ -103,3 +104,27 @@ def test_get_steps_per_day_deduplicates_and_sums_by_day(loaded_df):
     assert list(result.columns) == ["day", "total_steps"]
     assert len(result) == 1
     assert result["total_steps"].iloc[0] == 8000
+
+
+def test_load_analysis_returns_none_for_nonexistent_dir():
+    assert load_analysis("/tmp/does_not_exist_clockdata_analysis_xyz") is None
+
+
+def test_load_analysis_returns_none_for_empty_dir():
+    with tempfile.TemporaryDirectory() as d:
+        assert load_analysis(d) is None
+
+
+def test_load_analysis_reads_jsonl_and_returns_question_answer(tmp_path):
+    jsonl = (
+        '{"question":"Q1","answer":"A1"}\n'
+        '{"question":"Q2","answer":"A2"}\n'
+    )
+    (tmp_path / "part-00000.json").write_text(jsonl, encoding="utf-8")
+    (tmp_path / "_SUCCESS").write_text("")
+    df = load_analysis(str(tmp_path))
+    assert df is not None
+    assert list(df.columns) == ["question", "answer"]
+    assert len(df) == 2
+    assert df["question"].iloc[0] == "Q1"
+    assert df["answer"].iloc[1] == "A2"

@@ -6,10 +6,12 @@ from data_loader import (
     get_bpm_history,
     get_devices,
     get_steps_per_day,
+    load_analysis,
     load_gold,
 )
 
 GOLD_PATH = os.getenv("GOLD_PATH", "../data/gold")
+ANALYSIS_PATH = os.getenv("ANALYSIS_PATH", "../data/gold/analysis")
 
 st.set_page_config(page_title="ClockData — Santé", layout="wide")
 st.title("ClockData — Statistiques de santé")
@@ -48,3 +50,18 @@ steps_day = get_steps_per_day(filtered).set_index("day")
 st.bar_chart(steps_day["total_steps"])
 
 st.caption(f"Source Gold : `{os.path.abspath(GOLD_PATH)}`")
+
+st.divider()
+st.subheader("Analyse — 4 questions")
+
+analysis_df = load_analysis(ANALYSIS_PATH)
+
+if analysis_df is None or analysis_df.empty:
+    st.info(
+        f"Aucune analyse disponible dans `{ANALYSIS_PATH}`. "
+        "Lancez analysis-service pour générer les résultats."
+    )
+else:
+    for i, row in enumerate(analysis_df.itertuples(), start=1):
+        st.markdown(f"**{i}. {row.question}**")
+        st.write(row.answer)
