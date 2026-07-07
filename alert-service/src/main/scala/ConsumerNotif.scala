@@ -4,8 +4,9 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 
 import java.time.{Duration, Instant, ZoneId}
 import java.time.format.DateTimeFormatter
-import java.util.Properties
+import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
+import scala.util.{Failure, Success, Try}
 
 object ConsumerNotif {
 
@@ -35,11 +36,16 @@ object ConsumerNotif {
     val smtpPassword = sys.env("SMTP_PASSWORD")
     val recipient = sys.env("ALERT_RECIPIENT")
 
-    val props = new Properties()
-    props.put("mail.smtp.host", smtpHost)
-    props.put("mail.smtp.port", smtpPort)
-    props.put("mail.smtp.auth", "true")
-    props.put("mail.smtp.starttls.enable", "true")
+    // jakarta.mail n'accepte que java.util.Properties (pas de surcharge Map) : on construit
+    // la config en Map immuable, puis on ne mute qu'à cette unique frontière avec la librairie.
+    val smtpConfig = Map(
+      "mail.smtp.host" -> smtpHost,
+      "mail.smtp.port" -> smtpPort,
+      "mail.smtp.auth" -> "true",
+      "mail.smtp.starttls.enable" -> "true"
+    )
+    val props = new java.util.Properties()
+    props.putAll(smtpConfig.asJava)
 
     val session = Session.getInstance(
       props,
@@ -62,37 +68,40 @@ object ConsumerNotif {
   def main(args: Array[String]): Unit = {
     val bootstrap = sys.env.getOrElse("KAFKA_BOOTSTRAP", "localhost:9092")
 
-    val consumerProps = new Properties()
-    consumerProps.put("bootstrap.servers", bootstrap)
-    consumerProps.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
-    consumerProps.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
-    consumerProps.put("group.id", "alert-notifier")
-    consumerProps.put("auto.offset.reset", "latest")
-    consumerProps.put("enable.auto.commit", "false")
+    val consumerConfig = Map[String, AnyRef](
+      "bootstrap.servers" -> bootstrap,
+      "key.deserializer" -> "org.apache.kafka.common.serialization.StringDeserializer",
+      "value.deserializer" -> "org.apache.kafka.common.serialization.StringDeserializer",
+      "group.id" -> "alert-notifier",
+      "auto.offset.reset" -> "latest",
+      "enable.auto.commit" -> "false"
+    )
 
-    val consumer = new KafkaConsumer[String, String](consumerProps)
+    val consumer = new KafkaConsumer[String, String](consumerConfig.asJava)
     consumer.subscribe(java.util.List.of(AlertTopic))
 
     println(s"[ConsumerNotif] En écoute sur le topic '$AlertTopic'...")
 
-    while (true) {
+    @tailrec
+    def loop(): Unit = {
       val records = consumer.poll(Duration.ofMillis(1000))
-      for (record <- records.asScala) {
+      records.asScala.foreach { record =>
         Reading.parse(record.value()) match {
           case Some(reading) =>
-            try {
-              sendAlertEmail(reading)
-            } catch {
-              case e: Exception =>
+            Try(sendAlertEmail(reading)) match {
+              case Success(_) => ()
+              case Failure(e) =>
                 println(s"[ERREUR] Envoi email échoué : ${e.getMessage}")
-            } finally {
-              consumer.commitSync()
             }
+            consumer.commitSync()
           case None =>
             println(s"[ERREUR] JSON malformé, message ignoré : ${record.value()}")
             consumer.commitSync()
         }
       }
+      loop()
     }
+
+    loop()
   }
 }
