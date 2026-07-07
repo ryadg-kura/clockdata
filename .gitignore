@@ -18,6 +18,7 @@ Thumbs.db
 __pycache__/
 *.pyc
 dashboard/venv/
+.venv/
 data/gold/
 data/silver/
 docs/
