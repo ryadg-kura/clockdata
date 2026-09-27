@@ -1,0 +1,17 @@
+[
+  {"name": "event_id",            "type": "string",    "comment": "UUID set by the watch (dedup key)"},
+  {"name": "device_id",           "type": "string",    "comment": "Watch identifier"},
+  {"name": "event_time",          "type": "timestamp", "comment": "Measurement time (UTC)"},
+  {"name": "heart_rate",          "type": "int",       "comment": "Heart rate in BPM"},
+  {"name": "steps",               "type": "int",       "comment": "Steps since the previous event"},
+  {"name": "spo2",                "type": "double",    "comment": "Blood oxygen saturation (%)"},
+  {"name": "battery",             "type": "int",       "comment": "Battery level (%)"},
+  {"name": "heart_rate_zone",     "type": "string",    "comment": "bradycardia|resting|light|moderate|vigorous|tachycardia"},
+  {"name": "is_abnormal_hr",      "type": "boolean",   "comment": "True when heart rate is outside the configured bounds"},
+  {"name": "spo2_status",         "type": "string",    "comment": "normal|low|critical"},
+  {"name": "battery_low",         "type": "boolean",   "comment": "True when battery is under 15%"},
+  {"name": "arrival_time",        "type": "timestamp", "comment": "Kinesis approximate arrival time (UTC)"},
+  {"name": "processed_at",        "type": "timestamp", "comment": "Lambda processing time (UTC)"},
+  {"name": "end_to_end_latency_ms", "type": "bigint",  "comment": "processed_at - event_time"},
+  {"name": "kinesis_sequence_number", "type": "string", "comment": "Source record sequence number"}
+]

@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars (git-ignored) and adjust.
+aws_region  = "eu-west-3"
+environment = "dev"
+
+# Receive alarm e-mails (confirm the subscription link AWS sends you).
+# alert_email = "you@example.com"
+
+# hr_low_threshold  = 40
+# hr_high_threshold = 180

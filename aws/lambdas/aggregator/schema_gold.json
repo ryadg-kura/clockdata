@@ -1,0 +1,15 @@
+[
+  {"name": "device_id",         "type": "string",    "comment": "Watch identifier"},
+  {"name": "event_count",       "type": "bigint",    "comment": "Distinct events in the hour"},
+  {"name": "avg_heart_rate",    "type": "double",    "comment": "Mean BPM"},
+  {"name": "min_heart_rate",    "type": "int",       "comment": "Min BPM"},
+  {"name": "max_heart_rate",    "type": "int",       "comment": "Max BPM"},
+  {"name": "abnormal_hr_count", "type": "bigint",    "comment": "Events flagged is_abnormal_hr"},
+  {"name": "total_steps",       "type": "bigint",    "comment": "Sum of steps in the hour"},
+  {"name": "avg_spo2",          "type": "double",    "comment": "Mean SpO2 (%)"},
+  {"name": "min_spo2",          "type": "double",    "comment": "Min SpO2 (%)"},
+  {"name": "last_battery",      "type": "int",       "comment": "Battery level of the latest event"},
+  {"name": "first_event_time",  "type": "timestamp", "comment": "Earliest event in the hour (UTC)"},
+  {"name": "last_event_time",   "type": "timestamp", "comment": "Latest event in the hour (UTC)"},
+  {"name": "aggregated_at",     "type": "timestamp", "comment": "When this row was computed (UTC)"}
+]

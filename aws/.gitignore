@@ -1,0 +1,15 @@
+# Terraform: state holds resource ids, never commit it. The lock file IS committed.
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/*.tfplan
+infra/tfplan
+infra/plan.txt
+infra/crash.log
+infra/terraform.tfvars
+infra/.build/
+
+# Python
+.venv/
+.pytest_cache/
+__pycache__/

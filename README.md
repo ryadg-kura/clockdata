@@ -10,6 +10,12 @@ _"Data to save lives"_
 ## Sujet 
 ClockData est une entreprise qui fabrique des montres lifestyle pour le bien être de ses clients. Etant une entreprise soucieuse de la santé de ses clients, elle décide de rajouter un nouveau service d'analyse des statistiques de santé qui sera affiché via un dashboard où les clients pourront voir leurs statistiques de BPM, pas par jour et d'autres informations utiles pour leurs bien être. Ainsi qu'un service d'alerte d'urgence qui peut alerter un proche et soi-même pour prévenir d'un arrêt cardiaque à venir via un système de notification.
 
+## Version cloud AWS
+
+Une version cloud-native du pipeline (Kinesis, Lambda, S3 Bronze/Silver/Gold, Glue, Athena,
+CloudWatch), entièrement en Terraform, est disponible dans [`aws/`](aws/README.md). La version
+locale ci-dessous reste inchangée.
+
 ## Questions préliminaires
 
 ### 1.a Contraintes du stockage pour les statistiques

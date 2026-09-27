@@ -1,0 +1,97 @@
+name: aws-terraform
+
+# Checks the AWS version of ClockData on every pull request touching aws/.
+# Never applies anything: fmt + validate + plan only.
+on:
+  pull_request:
+    paths:
+      - "aws/**"
+      - ".github/workflows/aws-terraform.yml"
+
+permissions:
+  contents: read
+  id-token: write # only used if the AWS_PLAN_ROLE_ARN secret is configured (OIDC, no stored keys)
+
+concurrency:
+  group: aws-terraform-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  AWS_REGION: eu-west-3
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: aws
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13" # same as the Lambda runtime
+          cache: pip
+          cache-dependency-path: aws/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest
+
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash # -eo pipefail: a failing plan fails the step despite `| tee`
+        working-directory: aws/infra
+    env:
+      HAS_AWS_ROLE: ${{ secrets.AWS_PLAN_ROLE_ARN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.4"
+          terraform_wrapper: false
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff
+
+      - name: terraform init
+        run: terraform init
+
+      - name: terraform validate
+        run: terraform validate -no-color
+
+      # Real plan against an AWS account, when a read-only role is configured
+      # (see aws/README.md "CI"). Uses short-lived OIDC credentials.
+      - name: Configure AWS credentials (OIDC)
+        if: env.HAS_AWS_ROLE == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_PLAN_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: terraform plan (AWS account)
+        if: env.HAS_AWS_ROLE == 'true'
+        run: terraform plan -no-color -lock=false -out=tfplan | tee plan.txt
+
+      # Otherwise: offline plan with dummy credentials. It still evaluates every
+      # expression, IAM document and Lambda package, without an AWS account.
+      - name: terraform plan (offline, no AWS account)
+        if: env.HAS_AWS_ROLE != 'true'
+        env:
+          AWS_ACCESS_KEY_ID: offline
+          AWS_SECRET_ACCESS_KEY: offline
+          AWS_EC2_METADATA_DISABLED: "true"
+        run: terraform plan -no-color -lock=false -refresh=false -var offline_plan=true | tee plan.txt
+
+      - name: Plan summary
+        if: always()
+        run: |
+          {
+            echo "### Terraform plan (${{ env.HAS_AWS_ROLE == 'true' && 'AWS account' || 'offline' }})"
+            echo '```'
+            grep -E '^(Plan:|No changes|Error)' plan.txt || echo "no plan output"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
