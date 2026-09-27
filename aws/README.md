@@ -1,3 +1,5 @@
+[![CI](https://github.com/ryadg-kura/clockdata/actions/workflows/aws-terraform.yml/badge.svg?branch=main)](https://github.com/ryadg-kura/clockdata/actions/workflows/aws-terraform.yml)
+
 # ClockData on AWS: cloud-native version
 
 _"Data to save lives"_, now serverless on AWS.
@@ -475,12 +477,11 @@ Parquet/NDJSON files the Lambdas produce, using the same `dt=/hour=` layout as S
 
 ## CI (GitHub Actions)
 
-[`.github/workflows/aws-terraform.yml`](../.github/workflows/aws-terraform.yml) runs on every
-pull request that touches `aws/`:
+[`.github/workflows/aws-terraform.yml`](../.github/workflows/aws-terraform.yml) runs:
 
-1. `pytest` on Python 3.13 (the Lambda runtime)
-2. `terraform fmt -check`, `terraform validate`
-3. `terraform plan`:
+1. **On every push and pull request:** `make test` on Python 3.13 (the Lambda runtime). These
+   are the moto-based tests, so no AWS account is needed.
+2. **On pull requests:** `terraform fmt -check` and `terraform validate`, then `terraform plan`:
    - **offline** by default, with dummy credentials and `offline_plan=true`. No AWS account or
      secret is needed.
    - **against your account** if you add a repository secret `AWS_PLAN_ROLE_ARN`: a role with

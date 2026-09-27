@@ -1,19 +1,17 @@
-name: aws-terraform
+name: ci
 
-# Checks the AWS version of ClockData on every pull request touching aws/.
-# Never applies anything: fmt + validate + plan only.
+# - tests: `make test` (pytest + moto fakes, no AWS) on every push and pull request
+# - terraform: fmt + validate + plan on pull requests. Never applies anything.
 on:
+  push:
   pull_request:
-    paths:
-      - "aws/**"
-      - ".github/workflows/aws-terraform.yml"
 
 permissions:
   contents: read
   id-token: write # only used if the AWS_PLAN_ROLE_ARN secret is configured (OIDC, no stored keys)
 
 concurrency:
-  group: aws-terraform-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -22,7 +20,7 @@ env:
   AWS_REGION: eu-west-3
 
 jobs:
-  python-tests:
+  tests:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -35,10 +33,11 @@ jobs:
           python-version: "3.13" # same as the Lambda runtime
           cache: pip
           cache-dependency-path: aws/requirements-dev.txt
-      - run: pip install -r requirements-dev.txt
-      - run: python -m pytest
+      - name: make test
+        run: make test
 
   terraform:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     defaults:
       run:

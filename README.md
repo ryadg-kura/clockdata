@@ -1,3 +1,5 @@
+[![CI](https://github.com/ryadg-kura/clockdata/actions/workflows/aws-terraform.yml/badge.svg?branch=main)](https://github.com/ryadg-kura/clockdata/actions/workflows/aws-terraform.yml)
+
 # ClockData
 _"Data to save lives"_
 
